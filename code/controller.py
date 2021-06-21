@@ -5,35 +5,25 @@ from adafruit_motorkit import MotorKit
 import busio
 import board
 import digitalio
-from smbus import SMBus
+import serial
+from adafruit_bno08x_rvc import BNO08x_RVC
 
-from adafruit_bno08x import (
-    BNO_REPORT_ACCELEROMETER,
-    BNO_REPORT_GYROSCOPE,
-    BNO_REPORT_ROTATION_VECTOR,
-)
-from adafruit_bno08x.i2c import BNO08X_I2C
-
-#I2C initialization
-i2c = busio.I2C(board.SCL, board.SDA, frequency = 400000)
-
-def i2c_test():
-    bus1 = SMBus(1)
-    bus4 = SMBus(4)
-
-    out = bus1.read_byte_data(0x4A,0x1)
-    print(out)
-
-
-try:
-    imu = BNO08X_I2C(i2c, address=0x4A)
-    imu.enable_feature(BNO_REPORT_ACCELEROMETER)
-    imu.enable_feature(BNO_REPORT_GYROSCOPE)
-    imu.enable_feature(BNO_REPORT_ROTATION_VECTOR)
-    print('[CHECK     ]  [IMU - BNO08X]')
-except Exception as e:
-    print('[     ERROR]  [IMU - BNO08X]',e)
-
+def uart_test():
+    print('hello')
+    uart = serial.Serial("/dev/serial0", 115200)
+    rvc = BNO08x_RVC(uart)
+    i = 0
+    while i < 100:
+        uart = serial.Serial("/dev/serial0", 115200)
+        rvc = BNO08x_RVC(uart)
+        print('in loop...')
+        yaw, pitch, roll, x_accel, y_accel, z_accel = rvc.heading
+        print("Yaw: %2.2f Pitch: %2.2f Roll: %2.2f Degrees" % (yaw, pitch, roll))
+        print("Acceleration X: %2.2f Y: %2.2f Z: %2.2f m/s^2" % (x_accel, y_accel, z_accel))
+        print("")
+        time.sleep(0.1)
+        i += 1
+        
 try:
     kit = MotorKit()
     print('[CHECK     ]  [MOTOR DRIVER]')
@@ -47,7 +37,7 @@ class controller:
         self.state = []
         self.state_collection = {'x1':[], 'x2':[],'x3':[],'x4':[], 'u':[]}
         self.ref = float(0)
-        self.gain = 7 # 12V / 1.7 rad = 7 
+        self.gain = 1.2 # 12V / 10 deg/s = 1.2 
         self.k_motor = 10 #?
         self.kit = kit
         self.saturated_voltage = 12 #V
@@ -65,13 +55,13 @@ class controller:
     def get_state(self):
         
         try:
-            accel_x, accel_y, accel_z = imu.acceleration
-            gyro_x, gyro_y, gyro_z = imu.gyro
-            quat_i, quat_j, quat_k, quat_real = imu.quaternion
+            uart = serial.Serial("/dev/serial0", 115200)
+            rvc = BNO08x_RVC(uart)
+            gyro_z, gyro_x, gyro_y, x_accel, y_accel, z_accel = rvc.heading
             time.sleep(0.5)
 
             print('gyro: %0.3f'%(gyro_z))
-            state = [quat_k, gyro_z, 0, self.ref - quat_k]
+            state = [0, gyro_z, 0, self.ref - 0]
 
             return state
 
@@ -106,7 +96,6 @@ class controller:
         
         u = self.gain * state[1] / self.saturated_voltage
         print('u: %0.3f'%(u)) 
-        print('k_motor: %0.3f'%(self.k_motor) + '\n') 
         u = self.saturate_handle(u)
 
         state[2] = u * self.k_motor
