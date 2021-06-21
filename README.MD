@@ -10,8 +10,6 @@ All SolidWorks CAD files are found in the CAD folder. All 3D printed parts are i
 
 ### Bill of Materials:
 
-> •	Bill of Materials
-
 > •	Raspberry Pi (any version with 20 GPIO pins)
 
 > •	Raspberry Pi HAT for DC Motors (https://learn.adafruit.com/adafruit-dc-and-stepper-motor-hat-for-raspberry-pi)
