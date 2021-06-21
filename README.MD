@@ -50,7 +50,9 @@ The mechanical design was inspred by https://www.researchgate.net/publication/33
 
 ## Controller
 
-The idea is to send a PWM signal to the motor to rotate the reaction wheel against the motion of the pendulum arm. Gains are tuned to adjust the needed voltage input based on the state vector of the arm. States are updated from the IMU in the feedback loop.
+The idea is to send a PWM signal to the motor to rotate the reaction wheel against the motion of the pendulum arm. Gains are tuned to adjust the needed voltage input based on the state vector of the arm. States are updated from the IMU in the feedback loop. The control input becomes saturated at 12V and -12V.
+
+A simulation of the equations of motion and state vector algebra is found in simulation.py. The simulation allows you to change starting conditions and gains, and outputs control effort and states. 
 
 ## Notes
 
